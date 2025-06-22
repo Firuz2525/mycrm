@@ -1,3 +1,4 @@
+import Header from './components/Header';
 import './globals.css';
 import type { Metadata } from 'next';
 
@@ -12,17 +13,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="bg-gray-100 text-gray-900">
-        <header className="bg-white shadow p-4 text-xl font-bold">
-          <a href="/" className="hover:underline">Home</a>
-          <a href="/about" className="hover:underline mx-2">About</a>
-          <a href="/products" className="hover:underline">Products</a>
-        </header>
-        <main className="p-6">{children}</main>
-        <footer className="bg-white shadow p-4 mt-10 text-center text-sm">
-          © 2025 My App
-        </footer>
+    <html lang="en" className="dark:bg-gray-600">
+      <body className="text-gray-900 ">
+          <Header />
+          <main className="p-6">{children}</main>
+          <footer className="bg-white dark:bg-gray-800 shadow p-4 mt-10 text-white text-center text-sm">
+            © 2025 My App
+          </footer>
       </body>
     </html>
   );
