@@ -1,50 +1,127 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 
-const FormClient = () => {
+type Product = {
+  name: string;
+  price: number;
+};
+
+type FormClientProps = {
+  selectedProducts: Product[];
+};
+
+const FormClient: React.FC<FormClientProps> = ({ selectedProducts }) => {
+  const [company, setCompany] = useState("");
+  const [person, setPerson] = useState("");
+  const [phone, setPhone] = useState("");
+  const [lavozim, setLavozim] = useState("");
+  const [location, setLocation] = useState("");
+  const [product, setProduct] = useState("");
+  const [summa, setSumma] = useState<number | string>("");
+  const [status, setStatus] = useState("");
+
+  useEffect(() => {
+    if (selectedProducts.length > 0) {
+      const names = selectedProducts.map((p) => p.name).join(" + ");
+      const total = selectedProducts.reduce((acc, cur) => acc + cur.price, 0);
+      setProduct(names);
+      setSumma(total);
+    }
+  }, [selectedProducts]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const now = new Date();
+    const formattedDate = now.toLocaleString(); // e.g., "6/20/2025, 2:35:00 PM"
+    const uniqueId = uuidv4();
+
+    // Validate required fields
+    if (
+      !company.trim() ||
+      !person.trim() ||
+      !phone.trim() ||
+      !lavozim ||
+      !location ||
+      !product.trim() ||
+      !summa ||
+      !status
+    ) {
+      alert("Please fill in all fields before submitting.");
+      return;
+    }
+    console.log({
+      id: uniqueId,
+      date: formattedDate,
+      company,
+      person,
+      phone,
+      lavozim,
+      location,
+      product,
+      summa,
+      status,
+    });
+  };
+
+  const inputClass =
+    "px-4 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-full";
+
   return (
     <form
-      // onSubmit={(e) => {
-      //   e.preventDefault();
-      //   // handle left form submit
-      // }}
       className="w-full lg:w-1/3 space-y-4 p-6 mb-3 bg-white dark:bg-gray-800 rounded-xl shadow"
+      onSubmit={handleSubmit}
     >
       <h1 className="text-xl font-bold text-white">New Client</h1>
-      {/* Company */}
+
       <input
         type="text"
         placeholder="Company"
-        className="px-4 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+        value={company}
+        onChange={(e) => setCompany(e.target.value)}
+        className={inputClass}
       />
 
-      {/* Person */}
       <input
         type="text"
         placeholder="Person Name"
-        className="px-4 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+        value={person}
+        onChange={(e) => setPerson(e.target.value)}
+        className={inputClass}
       />
 
-      {/* Tel */}
       <input
         type="tel"
         placeholder="Phone Number"
-        className="px-4 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
+        className={inputClass}
       />
 
-      {/* Lavozim */}
-      <select className="px-4 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-full">
-        <option>Lavozim</option>
-        <option>CEO</option>
-        <option>Manager</option>
-        <option>Staff</option>
-        <option>Other</option>
+      <select
+        value={lavozim}
+        onChange={(e) => setLavozim(e.target.value)}
+        className={inputClass}
+      >
+        <option value="" disabled hidden>
+          Lavozim
+        </option>
+        <option value="CEO">CEO</option>
+        <option value="Manager">Manager</option>
+        <option value="Staff">Staff</option>
+        <option value="Other">Other</option>
       </select>
 
-      {/* Location */}
-      <select className="px-4 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-full">
-        <option>Location</option>
+      <select
+        value={location}
+        onChange={(e) => setLocation(e.target.value)}
+        className={inputClass}
+      >
+        <option value="" disabled hidden>
+          Location
+        </option>
         <option>Tashkent</option>
         <option>Samarkand</option>
         <option>Bukhara</option>
@@ -57,72 +134,34 @@ const FormClient = () => {
         <option>Kokand</option>
       </select>
 
-      {/* Product */}
-      <input
-        type="text"
+      <textarea
         placeholder="Product"
-        className="px-4 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+        value={product}
+        onChange={(e) => setProduct(e.target.value)}
+        className={inputClass}
       />
-      {/* buttons */}
-      {/* <>
-        <button
-          type="button"
-          className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-3 py-1 me-1 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
-        >
-          1.6mln: 15
-        </button>
-        <button
-          type="button"
-          className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-3 py-1 me-1 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
-        >
-          1.8mln
-        </button>
-        <button
-          type="button"
-          className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-3 py-1 me-1 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
-        >
-          2.1mln: 20
-        </button>
-        <button
-          type="button"
-          className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-3 py-1 me-1 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
-        >
-          2.6mln: 25
-        </button>
-        <button
-          type="button"
-          className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-3 py-1 me-1 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
-        >
-          3.1mln: 30
-        </button>
-        <button
-          type="button"
-          className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-3 py-1 me-1 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
-        >
-          3.6mln: 35
-        </button>
-        <button
-          type="button"
-          className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-3 py-1 me-1 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
-        >
-          4.1mln: 40
-        </button>
-      </> */}
-      {/* Summa */}
+
       <input
         type="number"
         placeholder="Summa"
-        className="px-4 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+        value={summa}
+        onChange={(e) => setSumma(e.target.value)}
+        className={inputClass}
       />
 
-      {/* Status $ */}
-      <select className="px-4 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-full">
-        <option>Status</option>
+      <select
+        value={status}
+        onChange={(e) => setStatus(e.target.value)}
+        className={inputClass}
+      >
+        <option value="" disabled hidden>
+          Status
+        </option>
         <option>Purchased</option>
         <option>Thinking</option>
         <option>Reject</option>
       </select>
-      {/* Submit Button */}
+
       <button
         type="submit"
         className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded 
