@@ -2,6 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { db } from "../lib/firebase";
+import { collection, addDoc } from "firebase/firestore";
+import { Settings } from "lucide-react";
 
 type Product = {
   name: string;
@@ -10,9 +13,13 @@ type Product = {
 
 type FormClientProps = {
   selectedProducts: Product[];
+  clearSelectedProducts: () => void;
 };
 
-const FormClient: React.FC<FormClientProps> = ({ selectedProducts }) => {
+const FormClient: React.FC<FormClientProps> = ({
+  selectedProducts,
+  clearSelectedProducts,
+}) => {
   const [company, setCompany] = useState("");
   const [person, setPerson] = useState("");
   const [phone, setPhone] = useState("");
@@ -21,6 +28,8 @@ const FormClient: React.FC<FormClientProps> = ({ selectedProducts }) => {
   const [product, setProduct] = useState("");
   const [summa, setSumma] = useState<number | string>("");
   const [status, setStatus] = useState("");
+  const [staffName, setStaffName] = useState("Izzat");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (selectedProducts.length > 0) {
@@ -29,41 +38,77 @@ const FormClient: React.FC<FormClientProps> = ({ selectedProducts }) => {
       setProduct(names);
       setSumma(total);
     }
+    // console.log(selectedProducts);
   }, [selectedProducts]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const getStaffName = () => {
+    return staffName; // for now
+    // Later: return auth.currentUser?.displayName || "Unknown";
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true); // Start loading
 
     const now = new Date();
-    const formattedDate = now.toLocaleString(); // e.g., "6/20/2025, 2:35:00 PM"
+    // const formattedDate = now.toLocaleString();
+    const date = new Date();
     const uniqueId = uuidv4();
 
-    // Validate required fields
+    const trimmedCompany = company.trim();
+    const trimmedPerson = person.trim();
+    const trimmedPhone = phone.trim();
+    const trimmedProduct = product.trim();
+
     if (
-      !company.trim() ||
-      !person.trim() ||
-      !phone.trim() ||
+      !trimmedCompany ||
+      !trimmedPerson ||
+      !trimmedPhone ||
       !lavozim ||
       !location ||
-      !product.trim() ||
+      !trimmedProduct ||
       !summa ||
       !status
     ) {
       alert("Please fill in all fields before submitting.");
+      setLoading(false);
       return;
     }
-    console.log({
+
+    const newClient = {
       id: uniqueId,
-      date: formattedDate,
-      company,
-      person,
-      phone,
+      date,
+      company: trimmedCompany,
+      person: trimmedPerson,
+      phone: trimmedPhone,
       lavozim,
       location,
-      product,
-      summa,
+      product: trimmedProduct,
+      summa: Number(summa),
       status,
-    });
+      staff: getStaffName(), // could be hardcoded or dynamic from auth
+    };
+
+    try {
+      await addDoc(collection(db, "clients"), newClient);
+      alert("Client added successfully ✅");
+
+      // Clear form fields (assuming you use useState)
+      setCompany("");
+      setPerson("");
+      setPhone("");
+      setLavozim("");
+      setLocation("");
+      setProduct("");
+      clearSelectedProducts(); // <- reset parent state
+      setSumma("");
+      setStatus("");
+    } catch (err) {
+      console.error("❌ Error adding document:", err);
+      alert("Failed to add client");
+    } finally {
+      setLoading(false); // Stop loading
+    }
   };
 
   const inputClass =
@@ -164,11 +209,16 @@ const FormClient: React.FC<FormClientProps> = ({ selectedProducts }) => {
 
       <button
         type="submit"
+        disabled={loading}
         className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded 
-                 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-blue-500 
-                 dark:hover:bg-blue-600"
+             focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-blue-500 
+             dark:hover:bg-blue-600 flex items-center justify-center gap-2"
       >
-        Submit
+        {loading ? (
+          <Settings className="w-5 h-5 animate-spin text-white" />
+        ) : (
+          "Submit"
+        )}
       </button>
     </form>
   );

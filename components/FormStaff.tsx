@@ -1,7 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { db } from "../lib/firebase";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  query,
+  orderBy,
+} from "firebase/firestore";
 
 type Staff = {
   id: string;
@@ -10,17 +21,31 @@ type Staff = {
 
 const FormStaff = () => {
   const [staffName, setStaffName] = useState("");
-  const [staffList, setStaffList] = useState<Staff[]>([
-    { id: uuidv4(), name: "Aliyev Jamshid" },
-    { id: uuidv4(), name: "Karimova Nargiza" },
-    { id: uuidv4(), name: "Rustamov Diyor" },
-    { id: uuidv4(), name: "Islomov Shoxrux" },
-    { id: uuidv4(), name: "Sattorova Dilnoza" },
-  ]);
+  const [staffList, setStaffList] = useState<{ id: string; name: string }[]>(
+    []
+  );
   const [error, setError] = useState(false);
   const [showDeleteId, setShowDeleteId] = useState<string | null>(null);
 
-  const handleAddStaff = (e: React.FormEvent) => {
+  // Fetch staff from Firestore (realtime)
+  useEffect(() => {
+    const fetchStaff = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "staff"));
+        const staffData: Staff[] = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          name: doc.data().name,
+        }));
+        setStaffList(staffData);
+      } catch (error) {
+        console.error("Error fetching staff:", error);
+      }
+    };
+
+    fetchStaff();
+  }, []);
+
+  const handleAddStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!staffName.trim()) {
       setError(true);
@@ -28,28 +53,34 @@ const FormStaff = () => {
       return;
     }
 
-    const newStaff: Staff = {
-      id: uuidv4(),
+    const newStaff = {
       name: staffName.trim(),
     };
 
-    setStaffList([...staffList, newStaff]);
-    setStaffName("");
-    setError(false);
+    try {
+      await addDoc(collection(db, "staff"), newStaff);
+      setStaffName("");
+      setError(false);
+    } catch (error) {
+      console.error("Error adding staff:", error);
+      alert("Failed to add staff.");
+    }
   };
 
   const handleRightClick = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
     setShowDeleteId(id);
-
-    setTimeout(() => {
-      setShowDeleteId(null);
-    }, 3000);
+    setTimeout(() => setShowDeleteId(null), 3000);
   };
 
-  const handleDelete = (id: string) => {
-    setStaffList(staffList.filter((staff) => staff.id !== id));
-    setShowDeleteId(null);
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, "staff", id));
+      setShowDeleteId(null);
+    } catch (error) {
+      console.error("Error deleting staff:", error);
+      alert("Failed to delete staff.");
+    }
   };
 
   const inputClass =

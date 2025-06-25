@@ -1,4 +1,4 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+For performance, use pagination or lazy loading if your tables grow big.
 
 git add .
 git commit -m ""
