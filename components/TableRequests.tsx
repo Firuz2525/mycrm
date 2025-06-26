@@ -27,7 +27,7 @@ type Request = {
   date: string;
   company: string;
   person: string;
-  tel: string;
+  phone: string;
   lavozim: string;
   location: string;
   product: string;
@@ -137,9 +137,9 @@ const TableRequests: React.FC<TableRequestsProps> = ({ selectedStatus }) => {
             <th className="px-3 py-2">Tel</th>
             <th className="px-3 py-2">Location</th>
             <th className="px-3 py-2">Product</th>
+            <th className="px-3 py-2">Staff</th>
             <th className="px-3 py-2">Summa</th>
             <th className="px-3 py-2">Status</th>
-            <th className="px-3 py-2">Staff</th>
             <th className="px-3 py-2">Process</th>
           </tr>
         </thead>
@@ -156,16 +156,18 @@ const TableRequests: React.FC<TableRequestsProps> = ({ selectedStatus }) => {
               <td className="px-1 py-2 dark:text-gray-600 italic">
                 {row.id.slice(0, 4)}
               </td>
-              <td className="px-1 py-2">{row.date.toLocaleString()}</td>
+              <td className="px-1 py-2 text-sm dark:text-gray-600">
+                {row.date.toLocaleString()}
+              </td>
               <td className="px-3 py-2">{row.company}</td>
               <td className="px-3 py-2">{row.person}</td>
               <td className="px-3 py-2">{row.lavozim}</td>
-              <td className="px-3 py-2">{row.tel}</td>
+              <td className="px-3 py-2">{row.phone}</td>
               <td className="px-3 py-2">{row.location}</td>
               <td className="px-3 py-2">{row.product}</td>
+              <td className="px-3 py-2">{row.staff}</td>
               <td className="px-3 py-2">{row.summa}</td>
               <td className="px-3 py-2">{row.status}</td>
-              <td className="px-3 py-2">{row.staff}</td>
               <td className="px-3 py-2 flex justify-between items-center">
                 {row.process}
                 {updatingRowId === row.id ? (

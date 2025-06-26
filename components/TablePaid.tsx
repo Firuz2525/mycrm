@@ -14,6 +14,7 @@ import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { Settings } from "lucide-react";
 import { getAuth } from "firebase/auth";
+import { v4 as uuidv4 } from "uuid";
 
 // types.ts or at top of your file
 export interface DataItem {
@@ -30,6 +31,7 @@ export interface DataItem {
   person: string;
   process: string;
 }
+
 function groupByStaff(data: DataItem[]): DataItem[] {
   const result: DataItem[] = [];
   const visitedStaff = new Set<string>();
@@ -39,7 +41,29 @@ function groupByStaff(data: DataItem[]): DataItem[] {
       const staffName = data[i].staff;
       if (!visitedStaff.has(staffName)) {
         const group = data.filter((item) => item.staff === staffName);
+
+        // Add group's entries to result
         result.push(...group);
+
+        // Calculate total summa
+        const totalSum = group.reduce((acc, item) => acc + item.summa, 0);
+
+        // Push total row
+        result.push({
+          staff: staffName,
+          status: "",
+          id: uuidv4(),
+          lavozim: "",
+          company: "",
+          product: "",
+          date: "",
+          location: "",
+          phone: "",
+          summa: totalSum,
+          person: "",
+          process: "",
+        });
+
         visitedStaff.add(staffName);
         break;
       }
@@ -59,9 +83,9 @@ const TablePaid = () => {
     "Tel",
     "Location",
     "Product",
+    "Staff",
     "Summa",
     "Status",
-    "Staff",
     "Process",
   ];
   const [paidData, setPaidData] = useState<any[]>([]);
@@ -103,58 +127,6 @@ const TablePaid = () => {
     );
     return () => unsubscribe();
   }, [userName]);
-  console.log(paidData);
-  // useEffect(() => {
-  //   const q = query(collection(db, "payments"), orderBy("date", "desc"));
-
-  //   const unsubscribe = onSnapshot(
-  //     q,
-  //     (snapshot) => {
-  //       const data: any[] = snapshot.docs.map((doc) => {
-  //         const docData = doc.data();
-  //         return {
-  //           ...docData,
-  //           id: doc.id,
-  //           date: docData.date.toDate().toLocaleString(), // ✅ Converts Firestore Timestamp to readable string
-  //         };
-  //       });
-  //       setPaidData(data);
-  //       setLoading(false);
-  //     },
-  //     (error) => {
-  //       console.error("❌ Error listening to payments:", error);
-  //       setLoading(false);
-  //     }
-  //   );
-
-  //   return () => unsubscribe();
-  // }, []);
-
-  // useEffect(() => {
-  //   const fetchPayments = async () => {
-  //     try {
-  //       const q = query(collection(db, "payments"), orderBy("date", "desc"));
-  //       const querySnapshot = await getDocs(q);
-  //       const data: any[] = querySnapshot.docs.map((doc) => {
-  //         const docData = doc.data();
-  //         return {
-  //           ...docData,
-  //           id: doc.id,
-  //           date: docData.date?.toDate().toLocaleDateString() ?? "N/A",
-  //         };
-  //       });
-  //       setPaidData(data);
-  //     } catch (error) {
-  //       console.error("❌ Error fetching payments:", error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchPayments();
-  // }, []);
-
-  // const total = paidData.reduce((acc, curr) => acc + curr.summa, 0);
   const total = paidData.reduce((acc, curr) => acc + (curr.summa || 0), 0);
 
   const handleExportToExcel = async () => {
@@ -164,12 +136,12 @@ const TablePaid = () => {
       row.company,
       row.person,
       row.lavozim,
-      row.tel,
+      row.phone,
       row.location,
       row.product,
+      row.staff,
       row.summa,
       row.status,
-      row.staff,
       row.process,
     ]);
 
@@ -230,22 +202,28 @@ const TablePaid = () => {
                 key={row.id}
                 className="bg-gray-100 dark:bg-black border-b dark:border-gray-700"
               >
-                <td className="px-1 py-2 dark:text-gray-600 italic">
+                <td className="px-1 py-2 text-sm dark:text-gray-600 italic">
                   {row.id.slice(0, 4)}
                 </td>
-                <td className="px-1 py-2">{row.date}</td>
+                <td className="px-1 py-2 text-sm dark:text-gray-600">
+                  {row.date}
+                </td>
                 <td className="px-2 py-2">{row.company}</td>
                 <td className="px-2 py-2">{row.person}</td>
                 <td className="px-2 py-2">{row.lavozim}</td>
-                <td className="px-2 py-2">{row.tel}</td>
+                <td className="px-2 py-2">{row.phone}</td>
                 <td className="px-2 py-2">{row.location}</td>
                 <td className="px-2 py-2">{row.product}</td>
+                <td className="px-2 py-2">{row.staff}</td>
                 <td className="px-2 py-2">
                   {row.summa?.toLocaleString() ?? 0}
                 </td>
-                <td className="px-2 py-2">{row.status}</td>
-                <td className="px-2 py-2">{row.staff}</td>
-                <td className="px-2 py-2">{row.process}</td>
+                <td className="px-2 py-2 text-sm dark:text-gray-600">
+                  {row.status}
+                </td>
+                <td className="px-2 py-2 text-sm dark:text-gray-600">
+                  {row.process}
+                </td>
               </tr>
             ))
           )}
