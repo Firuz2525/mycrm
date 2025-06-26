@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { toast } from "sonner";
 
 // Import Firebase Authentication functions
@@ -48,7 +48,6 @@ const FormLogin = () => {
       setLoading(false); // Ensure loading is turned off regardless of success or failure
     }
   };
-
   return (
     <form
       onSubmit={handleSubmit}

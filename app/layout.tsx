@@ -18,7 +18,7 @@ export default function RootLayout({
       <body className="text-gray-900">
         <Header />
         <Toaster richColors />
-        <main className="p-6">{children}</main>
+        <main className="">{children}</main>
       </body>
     </html>
   );
