@@ -66,7 +66,7 @@ const FormLogin = () => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full lg:w-1/3 space-y-4 p-6 mb-3 bg-white dark:bg-gray-800 rounded-xl shadow"
+      className="shadow-2xl w-full lg:w-1/3 space-y-4 p-6 mb-3 bg-white dark:bg-gray-800 rounded-xl shadow"
     >
       <h1 className="text-xl font-bold text-white">Login</h1>
 

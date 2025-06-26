@@ -4,8 +4,6 @@ export default function Home() {
   return (
     <main className="">
       <div className="relative w-full h-auto aspect-[4/3]">
-        {" "}
-        {/* optional aspect ratio */}
         <Image
           src="/carousel-1.jpg"
           alt="Shisha Product"

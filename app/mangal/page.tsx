@@ -16,6 +16,7 @@ export interface Product {
   price: number;
 }
 import { User } from "firebase/auth";
+import Image from "next/image";
 export default function MangalPage() {
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
@@ -51,8 +52,15 @@ export default function MangalPage() {
 
   if (!user) {
     return (
-      <div className="p-6">
+      <div className="p-6 flex flex-col lg:flex-row items-center justify-evenly gap-6">
         <FormLogin />
+        <Image
+          src="/igear.jpg"
+          alt="Shisha Product"
+          width={500}
+          height={300}
+          className="object-contain rounded-2xl shadow-2xl" // or object-cover for cropping
+        />
       </div>
     );
   }
