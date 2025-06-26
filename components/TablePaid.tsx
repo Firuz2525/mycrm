@@ -16,7 +16,6 @@ import { Settings } from "lucide-react";
 import { getAuth } from "firebase/auth";
 import { v4 as uuidv4 } from "uuid";
 
-// types.ts or at top of your file
 export interface DataItem {
   staff: string;
   status: string;
@@ -42,13 +41,10 @@ function groupByStaff(data: DataItem[]): DataItem[] {
       if (!visitedStaff.has(staffName)) {
         const group = data.filter((item) => item.staff === staffName);
 
-        // Add group's entries to result
         result.push(...group);
 
-        // Calculate total summa
         const totalSum = group.reduce((acc, item) => acc + item.summa, 0);
 
-        // Push total row
         result.push({
           staff: staffName,
           status: "",
@@ -88,7 +84,8 @@ const TablePaid = () => {
     "Status",
     "Process",
   ];
-  const [paidData, setPaidData] = useState<any[]>([]);
+
+  const [paidData, setPaidData] = useState<DataItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -102,8 +99,10 @@ const TablePaid = () => {
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const allData: any[] = snapshot.docs.map((doc) => {
-          const docData = doc.data();
+        const allData: DataItem[] = snapshot.docs.map((doc) => {
+          const docData = doc.data() as Omit<DataItem, "id" | "date"> & {
+            date: { toDate: () => Date };
+          };
           return {
             ...docData,
             id: doc.id,
@@ -127,6 +126,7 @@ const TablePaid = () => {
     );
     return () => unsubscribe();
   }, [userName]);
+
   const total = paidData.reduce((acc, curr) => acc + (curr.summa || 0), 0);
 
   const handleExportToExcel = async () => {
@@ -145,7 +145,6 @@ const TablePaid = () => {
       row.process,
     ]);
 
-    // Append total row
     dataRows.push(["", "", "", "", "", "", "", "Total", total, "", "", ""]);
 
     const worksheet = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
@@ -160,6 +159,7 @@ const TablePaid = () => {
         "Do you want to delete all Payment records now?"
       );
       if (!confirmDelete) return;
+
       setIsDeleting(true);
       const q = query(collection(db, "payments"));
       const snapshot = await getDocs(q);
@@ -168,12 +168,12 @@ const TablePaid = () => {
       await Promise.all(deletePromises);
 
       toast.success("🗑️ Payments data deleted from Firestore");
-      setPaidData([]); // update UI if you keep paidData state
+      setPaidData([]);
     } catch (error) {
       console.error("Export/Delete error:", error);
       toast.error("❌ Error during export or deletion");
     } finally {
-      setIsDeleting(false); // Stop loading
+      setIsDeleting(false);
     }
   };
 

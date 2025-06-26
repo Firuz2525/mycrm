@@ -15,12 +15,12 @@ export interface Product {
   name: string;
   price: number;
 }
-
+import { User } from "firebase/auth";
 export default function MangalPage() {
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
-  const [user, setUser] = useState<any>(null);
-
+  // const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const statuses = ["Purchased", "Thinking", "Reject"];
 
   const handleClearSelectedProducts = () => {
@@ -33,6 +33,7 @@ export default function MangalPage() {
       toast.success("Logged out successfully");
       setUser(null);
     } catch (err) {
+      console.error("Error:", err);
       toast.error("Error while logging out");
     }
   };
@@ -88,7 +89,7 @@ export default function MangalPage() {
             onClick={() =>
               setSelectedStatus((prev) => (prev === status ? null : status))
             }
-            className={`px-4 py-2 mr-2 cursor-pointer rounded shadow transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 
+            className={`px-4 py-2 mr-2 cursor-pointer rounded shadow transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400
         ${
           selectedStatus === status ? "bg-yellow-900" : "bg-gray-900"
         } text-white`}

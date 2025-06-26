@@ -30,22 +30,37 @@ const FormLogin = () => {
       toast.success(`✅ Welcome, ${user.email}!`);
       setEmail("");
       setPassword("");
-    } catch (error: any) {
-      // Handle different Firebase Auth errors
+    } catch (error: unknown) {
+      // Default error message
       let errorMessage = "❌ Login failed. Please try again.";
+
       if (
-        error.code === "auth/user-not-found" ||
-        error.code === "auth/wrong-password"
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        typeof (error as { code: unknown }).code === "string"
       ) {
-        errorMessage = "❌ Invalid email or password.";
-      } else if (error.code === "auth/invalid-email") {
-        errorMessage = "❌ The email address is not valid.";
-      } else {
-        console.error("Firebase Auth Error:", error.message);
+        const errorCode = (error as { code: string }).code;
+
+        if (
+          errorCode === "auth/user-not-found" ||
+          errorCode === "auth/wrong-password"
+        ) {
+          errorMessage = "❌ Invalid email or password.";
+        } else if (errorCode === "auth/invalid-email") {
+          errorMessage = "❌ The email address is not valid.";
+        }
       }
+
+      if (error instanceof Error) {
+        console.error("Firebase Auth Error:", error.message);
+      } else {
+        console.error("Unknown error during sign-in:", error);
+      }
+
       toast.error(errorMessage);
     } finally {
-      setLoading(false); // Ensure loading is turned off regardless of success or failure
+      setLoading(false);
     }
   };
   return (

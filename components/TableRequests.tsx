@@ -13,7 +13,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { Check, Forward, Settings, X } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 // Types
@@ -45,7 +45,8 @@ const TableRequests: React.FC<TableRequestsProps> = ({ selectedStatus }) => {
   );
   const [updatingRowId, setUpdatingRowId] = useState<string | null>(null);
   const user = getAuth().currentUser;
-  const userName = user?.displayName || "";
+  // const userName = user?.displayName || "";
+  const userName = useMemo(() => user?.displayName || "", [user]);
 
   useEffect(() => {
     const q = query(collection(db, "clients"), orderBy("date", "desc"));
@@ -70,7 +71,8 @@ const TableRequests: React.FC<TableRequestsProps> = ({ selectedStatus }) => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [userName]);
+  // 73:6  Warning: React Hook useEffect has a missing dependency: 'userName'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
 
   const handleEdit = (id: string) => {
     setIsEditingRow((prev) => ({ ...prev, [id]: true }));

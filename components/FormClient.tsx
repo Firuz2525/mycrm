@@ -60,7 +60,6 @@ const FormClient: React.FC<FormClientProps> = ({
     e.preventDefault();
     setLoading(true); // Start loading
 
-    const now = new Date();
     // const formattedDate = now.toLocaleString();
     const date = new Date();
     const uniqueId = uuidv4();

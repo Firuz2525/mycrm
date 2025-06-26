@@ -6,7 +6,6 @@ import {
   getAuth,
   createUserWithEmailAndPassword,
   updateProfile,
-  deleteUser,
 } from "firebase/auth";
 import {
   collection,
@@ -17,14 +16,24 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
+import { Timestamp } from "firebase/firestore";
+
+export interface StaffData {
+  id: string;
+  uid: string;
+  email: string;
+  password: string;
+  displayName: string;
+  createdAt: Timestamp | null; // Or `Timestamp` if you're importing from 'firebase/firestore'
+}
 
 const FormStaff = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [staffList, setStaffList] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [showDeleteId, setShowDeleteId] = useState<string | null>(null);
+  const [staffList, setStaffList] = useState<StaffData[]>([]);
 
   const auth = getAuth();
   const currentUser = auth.currentUser;
@@ -32,11 +41,22 @@ const FormStaff = () => {
   // 🔒 Only Firuz can register staff
   const isFiruz = currentUser?.displayName?.toLowerCase().includes("firuz");
 
+  // useEffect(() => {
+  //   const unsubscribe = onSnapshot(collection(db, "staff"), (snapshot) => {
+  //     const data = snapshot.docs.map((doc) => ({
+  //       id: doc.id,
+  //       ...doc.data(),
+  //     }));
+  //     setStaffList(data);
+  //   });
+
+  //   return () => unsubscribe();
+  // }, []);
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "staff"), (snapshot) => {
       const data = snapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data(),
+        ...(doc.data() as Omit<StaffData, "id">), // assert the shape
       }));
       setStaffList(data);
     });
@@ -79,9 +99,13 @@ const FormStaff = () => {
       setEmail("");
       setPassword("");
       setDisplayName("");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error adding staff:", error);
-      toast.error("❌ Failed to register staff: " + error.message);
+      let errorMessage = "❌ Failed to register staff";
+      if (error instanceof Error) {
+        errorMessage += ": " + error.message;
+      }
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
