@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import FormClient from "../../components/FormClient";
-import FormProducts from "../../components/FormProducts";
-import FormStaff from "../../components/FormStaff";
-import TableRequests from "../../components/TableRequests";
-import TablePaid from "../../components/TablePaid";
-import FormLogin from "../../components/FormLogin";
+import FormClient from "../components/FormClient";
+import FormProducts from "../components/FormProducts";
+import FormStaff from "../components/FormStaff";
+import TableRequests from "../components/TableRequests";
+import TablePaid from "../components/TablePaid";
+import FormLogin from "../components/FormLogin";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { useEffect } from "react";
 import { toast } from "sonner";

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { auth, db } from "../lib/firebase";
+import { auth, db } from "../../lib/firebase";
 import { collection, addDoc } from "firebase/firestore";
 import { Settings } from "lucide-react";
 import { toast } from "sonner";

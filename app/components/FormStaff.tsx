@@ -15,7 +15,7 @@ import {
   onSnapshot,
   serverTimestamp,
 } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { db } from "../../lib/firebase";
 import { Timestamp } from "firebase/firestore";
 
 export interface StaffData {
