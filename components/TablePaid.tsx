@@ -1,8 +1,18 @@
 "use client";
 
-import React from "react";
+import { db } from "@/lib/firebase";
+import {
+  collection,
+  deleteDoc,
+  getDocs,
+  onSnapshot,
+  orderBy,
+  query,
+} from "firebase/firestore";
+import React, { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
-
+import { toast } from "sonner";
+import { Settings } from "lucide-react";
 const TablePaid = () => {
   const headers = [
     "ID",
@@ -18,94 +28,64 @@ const TablePaid = () => {
     "Staff",
     "Process",
   ];
-  const paidData = [
-    {
-      id: "005",
-      date: "2024-06-20",
-      company: "SkyCom",
-      person: "Gulbahor Yusupova",
-      tel: "+998 95 777 00 99",
-      lavozim: "Manager",
-      location: "Bukhara",
-      product: "Fiber Router",
-      summa: 320,
-      status: "Purchased",
-      process: "Paid",
-      staff: "Shahlo",
-    },
-    {
-      id: "006",
-      date: "2024-06-20",
-      company: "MedExpress",
-      person: "Abdurahmon Tursunov",
-      tel: "+998 91 222 33 44",
-      lavozim: "CEO",
-      location: "Fergana",
-      product: "Barcode Scanner",
-      summa: 250,
-      status: "Thinking",
-      process: "Paid",
-      staff: "Jamshid",
-    },
-    {
-      id: "007",
-      date: "2024-06-20",
-      company: "SmartWare",
-      person: "Sevinch Mamatova",
-      tel: "+998 90 444 66 88",
-      lavozim: "Staff",
-      location: "Nukus",
-      product: "POS Terminal",
-      summa: 890,
-      status: "Purchased",
-      process: "Paid",
-      staff: "Lola",
-    },
-    {
-      id: "008",
-      date: "2024-06-20",
-      company: "AgroTech",
-      person: "Ibrohim Toshpulatov",
-      tel: "+998 93 999 55 11",
-      lavozim: "Manager",
-      location: "Jizzakh",
-      product: "Drone (Agro)",
-      summa: 3100,
-      status: "Reject",
-      process: "Paid",
-      staff: "Rustam",
-    },
-    {
-      id: "009",
-      date: "2024-06-20",
-      company: "Edutools",
-      person: "Malika Rahmatova",
-      tel: "+998 94 222 11 77",
-      lavozim: "Other",
-      location: "Kokand",
-      product: "Projector",
-      summa: 750,
-      status: "Thinking",
-      process: "Paid",
-      staff: "Azamat",
-    },
-    {
-      id: "010",
-      date: "2024-06-20",
-      company: "FastPrint",
-      person: "Oybek Qodirov",
-      tel: "+998 90 888 77 66",
-      lavozim: "CEO",
-      location: "Khiva",
-      product: "HP LaserJet Pro",
-      summa: 470,
-      status: "Purchased",
-      process: "Paid",
-      staff: "Dilshod",
-    },
-  ];
-  const total = paidData.reduce((acc, curr) => acc + curr.summa, 0);
-  const handleExportToExcel = () => {
+  const [paidData, setPaidData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const q = query(collection(db, "payments"), orderBy("date", "desc"));
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const data: any[] = snapshot.docs.map((doc) => {
+          const docData = doc.data();
+          return {
+            ...docData,
+            id: doc.id,
+            date: docData.date.toDate().toLocaleString(), // ✅ Converts Firestore Timestamp to readable string
+          };
+        });
+        setPaidData(data);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("❌ Error listening to payments:", error);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  // useEffect(() => {
+  //   const fetchPayments = async () => {
+  //     try {
+  //       const q = query(collection(db, "payments"), orderBy("date", "desc"));
+  //       const querySnapshot = await getDocs(q);
+  //       const data: any[] = querySnapshot.docs.map((doc) => {
+  //         const docData = doc.data();
+  //         return {
+  //           ...docData,
+  //           id: doc.id,
+  //           date: docData.date?.toDate().toLocaleDateString() ?? "N/A",
+  //         };
+  //       });
+  //       setPaidData(data);
+  //     } catch (error) {
+  //       console.error("❌ Error fetching payments:", error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchPayments();
+  // }, []);
+
+  // const total = paidData.reduce((acc, curr) => acc + curr.summa, 0);
+  const total = paidData.reduce((acc, curr) => acc + (curr.summa || 0), 0);
+
+  const handleExportToExcel = async () => {
     const dataRows = paidData.map((row) => [
       row.id,
       row.date,
@@ -127,8 +107,32 @@ const TablePaid = () => {
     const worksheet = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "PaidClients");
-    XLSX.writeFile(workbook, "paid_clients.xlsx");
+
+    try {
+      XLSX.writeFile(workbook, "paid_clients.xlsx");
+      toast.success("✅ Excel file downloaded");
+
+      const confirmDelete = confirm(
+        "Do you want to delete all Payment records now?"
+      );
+      if (!confirmDelete) return;
+      setIsDeleting(true);
+      const q = query(collection(db, "payments"));
+      const snapshot = await getDocs(q);
+
+      const deletePromises = snapshot.docs.map((doc) => deleteDoc(doc.ref));
+      await Promise.all(deletePromises);
+
+      toast.success("🗑️ Payments data deleted from Firestore");
+      setPaidData([]); // update UI if you keep paidData state
+    } catch (error) {
+      console.error("Export/Delete error:", error);
+      toast.error("❌ Error during export or deletion");
+    } finally {
+      setIsDeleting(false); // Stop loading
+    }
   };
+
   return (
     <div className="mt-5">
       <table className="w-full text-left text-gray-500 dark:text-gray-300">
@@ -142,28 +146,41 @@ const TablePaid = () => {
           </tr>
         </thead>
         <tbody>
-          {paidData.map((row) => (
-            <tr
-              key={row.id}
-              className="bg-gray-100 dark:bg-black border-b dark:border-gray-700"
-            >
-              <td className="px-2 py-2">{row.id}</td>
-              <td className="px-2 py-2">{row.date}</td>
-              <td className="px-2 py-2">{row.company}</td>
-              <td className="px-2 py-2">{row.person}</td>
-              <td className="px-2 py-2">{row.lavozim}</td>
-              <td className="px-2 py-2">{row.tel}</td>
-              <td className="px-2 py-2">{row.location}</td>
-              <td className="px-2 py-2">{row.product}</td>
-              <td className="px-2 py-2">${row.summa.toLocaleString()}</td>
-              <td className="px-2 py-2">{row.status}</td>
-              <td className="px-2 py-2">{row.staff}</td>
-              <td className="px-2 py-2">{row.process}</td>
+          {loading ? (
+            <tr>
+              <td colSpan={12} className="text-center py-4 text-yellow-400">
+                <Settings className="animate-spin w-5 h-5" />
+              </td>
             </tr>
-          ))}
+          ) : (
+            paidData.map((row) => (
+              <tr
+                key={row.id}
+                className="bg-gray-100 dark:bg-black border-b dark:border-gray-700"
+              >
+                <td className="px-1 py-2 dark:text-gray-600 italic">
+                  {row.id.slice(0, 4)}
+                </td>
+                <td className="px-1 py-2">{row.date}</td>
+                <td className="px-2 py-2">{row.company}</td>
+                <td className="px-2 py-2">{row.person}</td>
+                <td className="px-2 py-2">{row.lavozim}</td>
+                <td className="px-2 py-2">{row.tel}</td>
+                <td className="px-2 py-2">{row.location}</td>
+                <td className="px-2 py-2">{row.product}</td>
+                <td className="px-2 py-2">
+                  {row.summa?.toLocaleString() ?? 0}
+                </td>
+                <td className="px-2 py-2">{row.status}</td>
+                <td className="px-2 py-2">{row.staff}</td>
+                <td className="px-2 py-2">{row.process}</td>
+              </tr>
+            ))
+          )}
+
           <tr className="bg-green-100 dark:bg-gray-900 font-bold">
             <td colSpan={8}></td>
-            <td className="px-2 py-2">${total.toLocaleString()}</td>
+            <td className="px-2 py-2">{total.toLocaleString()}</td>
             <td colSpan={3}></td>
           </tr>
         </tbody>
@@ -172,9 +189,17 @@ const TablePaid = () => {
       <div className="mt-2">
         <button
           onClick={handleExportToExcel}
-          className="px-4 py-2 bg-cyan-800 hover:bg-cyan-900 text-white rounded shadow transition duration-200"
+          disabled={isDeleting}
+          className="px-4 py-2 bg-cyan-800 hover:bg-cyan-900 text-white rounded shadow transition duration-200 flex items-center gap-2"
         >
-          Export to Excel
+          {isDeleting ? (
+            <>
+              <Settings className="animate-spin w-5 h-5" />
+              Deleting...
+            </>
+          ) : (
+            "Export to Excel"
+          )}
         </button>
       </div>
     </div>

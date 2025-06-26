@@ -2,14 +2,20 @@
 
 import { db } from "@/lib/firebase";
 import {
+  addDoc,
   collection,
-  getDocs,
+  deleteDoc,
+  doc,
   onSnapshot,
   orderBy,
   query,
+  updateDoc,
 } from "firebase/firestore";
-import { Forward } from "lucide-react";
+import { Check, Forward, Settings, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
+
+// Types
 
 type TableRequestsProps = {
   selectedStatus: string | null;
@@ -33,179 +39,12 @@ type Request = {
 const TableRequests: React.FC<TableRequestsProps> = ({ selectedStatus }) => {
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // const requests: Request[] = [
-  //   {
-  //     id: "001",
-  //     date: "2025-06-20",
-  //     company: "TechZone",
-  //     person: "Ali Karimov",
-  //     tel: "+998 90 123 45 67",
-  //     lavozim: "CEO",
-  //     location: "Tashkent",
-  //     product: "Laptop Dell XPS 13",
-  //     summa: "$1200",
-  //     status: "Purchased",
-  //     process: "Finished",
-  //     staff: "Shahzod",
-  //   },
-  //   {
-  //     id: "002",
-  //     date: "2025-06-19",
-  //     company: "NanoSoft",
-  //     person: "Dilnoza Rakhimova",
-  //     tel: "+998 91 765 43 21",
-  //     lavozim: "Manager",
-  //     location: "Samarkand",
-  //     product: "iPhone 14 Pro",
-  //     summa: "$1300",
-  //     status: "Thinking",
-  //     process: "None",
-  //     staff: "Madina",
-  //   },
-  //   {
-  //     id: "003",
-  //     date: "2025-06-19",
-  //     company: "GreenPower LLC",
-  //     person: "Jasur Islomov",
-  //     tel: "+998 93 333 44 55",
-  //     lavozim: "Staff",
-  //     location: "Andijan",
-  //     product: "Solar Panel Kit",
-  //     summa: "$2500",
-  //     status: "Purchased",
-  //     process: "Pending",
-  //     staff: "Ulugbek",
-  //   },
-  //   {
-  //     id: "004",
-  //     date: "2025-06-18",
-  //     company: "AutoX",
-  //     person: "Murod Sa’dullaev",
-  //     tel: "+998 97 888 11 22",
-  //     lavozim: "Other",
-  //     location: "Namangan",
-  //     product: "GPS Tracker",
-  //     summa: "$110",
-  //     status: "Reject",
-  //     process: "None",
-  //     staff: "Farrukh",
-  //   },
-  //   {
-  //     id: "005",
-  //     date: "2025-06-18",
-  //     company: "SkyCom",
-  //     person: "Gulbahor Yusupova",
-  //     tel: "+998 95 777 00 99",
-  //     lavozim: "Manager",
-  //     location: "Bukhara",
-  //     product: "Fiber Router",
-  //     summa: "$320",
-  //     status: "Purchased",
-  //     process: "Pending",
-  //     staff: "Shahlo",
-  //   },
-  //   {
-  //     id: "006",
-  //     date: "2025-06-17",
-  //     company: "MedExpress",
-  //     person: "Abdurahmon Tursunov",
-  //     tel: "+998 91 222 33 44",
-  //     lavozim: "CEO",
-  //     location: "Fergana",
-  //     product: "Barcode Scanner",
-  //     summa: "$250",
-  //     status: "Thinking",
-  //     process: "None",
-  //     staff: "Jamshid",
-  //   },
-  //   {
-  //     id: "007",
-  //     date: "2025-06-16",
-  //     company: "SmartWare",
-  //     person: "Sevinch Mamatova",
-  //     tel: "+998 90 444 66 88",
-  //     lavozim: "Staff",
-  //     location: "Nukus",
-  //     product: "POS Terminal",
-  //     summa: "$890",
-  //     status: "Purchased",
-  //     process: "Finished",
-  //     staff: "Lola",
-  //   },
-  //   {
-  //     id: "008",
-  //     date: "2025-06-15",
-  //     company: "AgroTech",
-  //     person: "Ibrohim Toshpulatov",
-  //     tel: "+998 93 999 55 11",
-  //     lavozim: "Manager",
-  //     location: "Jizzakh",
-  //     product: "Drone (Agro)",
-  //     summa: "$3100",
-  //     status: "Reject",
-  //     process: "None",
-  //     staff: "Rustam",
-  //   },
-  //   {
-  //     id: "009",
-  //     date: "2025-06-14",
-  //     company: "Edutools",
-  //     person: "Malika Rahmatova",
-  //     tel: "+998 94 222 11 77",
-  //     lavozim: "Other",
-  //     location: "Kokand",
-  //     product: "Projector",
-  //     summa: "$750",
-  //     status: "Thinking",
-  //     process: "None",
-  //     staff: "Azamat",
-  //   },
-  //   {
-  //     id: "010",
-  //     date: "2025-06-13",
-  //     company: "FastPrint",
-  //     person: "Oybek Qodirov",
-  //     tel: "+998 90 888 77 66",
-  //     lavozim: "CEO",
-  //     location: "Khiva",
-  //     product: "HP LaserJet Pro",
-  //     summa: "$470",
-  //     status: "Purchased",
-  //     process: "Finished",
-  //     staff: "Dilshod",
-  //   },
-  // ];
-
-  const filteredRequests = selectedStatus
-    ? requests.filter((r) => r.status === selectedStatus)
-    : requests;
+  const [isEditingRow, setIsEditingRow] = useState<{ [id: string]: boolean }>(
+    {}
+  );
+  const [updatingRowId, setUpdatingRowId] = useState<string | null>(null);
 
   useEffect(() => {
-    // const fetchClients = async () => {
-    //   try {
-    //     const q = query(collection(db, "clients"), orderBy("date", "desc"));
-    //     const querySnapshot = await getDocs(q);
-
-    //     const data: Request[] = [];
-    //     querySnapshot.forEach((doc) => {
-    //       const docData = doc.data();
-    //       data.push({
-    //         ...docData,
-    //         id: doc.id,
-    //         date: docData.date.toDate().toLocaleString(), // convert Firestore timestamp to string
-    //       } as Request);
-    //     });
-
-    //     setRequests(data);
-    //     setLoading(false);
-    //   } catch (error) {
-    //     console.error("Error fetching clients:", error);
-    //   }
-    // };
-
-    // fetchClients();
-
     const q = query(collection(db, "clients"), orderBy("date", "desc"));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -214,7 +53,7 @@ const TableRequests: React.FC<TableRequestsProps> = ({ selectedStatus }) => {
         return {
           ...docData,
           id: doc.id,
-          date: docData.date.toDate().toLocaleString(), // convert timestamp to readable string
+          date: docData.date.toDate().toLocaleString(),
         } as Request;
       });
 
@@ -222,8 +61,58 @@ const TableRequests: React.FC<TableRequestsProps> = ({ selectedStatus }) => {
       setLoading(false);
     });
 
-    return () => unsubscribe(); // cleanup on unmount
+    return () => unsubscribe();
   }, []);
+
+  const handleEdit = (id: string) => {
+    setIsEditingRow((prev) => ({ ...prev, [id]: true }));
+  };
+
+  const handleCancel = (id: string) => {
+    setIsEditingRow((prev) => ({ ...prev, [id]: false }));
+  };
+
+  const handleCheck = async (row: Request) => {
+    setUpdatingRowId(row.id);
+    const docRef = doc(db, "clients", row.id);
+
+    try {
+      if (row.status === "Thinking" || row.status === "Reject") {
+        await updateDoc(docRef, { status: "Purchased" });
+        toast.success("Status updated to Purchased");
+      } else if (row.status === "Purchased" && row.process === "pending") {
+        await updateDoc(docRef, { process: "finished" });
+        toast.success("Process updated to Finished");
+      } else if (row.status === "Purchased" && row.process === "finished") {
+        // Prepare data to move
+        const newDocData = {
+          ...row,
+          process: "paid",
+          date: new Date(), // optional: reassign new server date
+        };
+
+        const paymentsRef = collection(db, "payments");
+
+        // Add to "payments" collection
+        await addDoc(paymentsRef, newDocData);
+
+        // Remove from "clients" collection
+        await deleteDoc(docRef);
+
+        toast.success("Data moved to Payments");
+      }
+    } catch (err) {
+      console.error("❌ Update failed:", err);
+      toast.error("Update failed");
+    } finally {
+      setUpdatingRowId(null);
+      setIsEditingRow((prev) => ({ ...prev, [row.id]: false }));
+    }
+  };
+
+  const filteredRequests = selectedStatus
+    ? requests.filter((r) => r.status === selectedStatus)
+    : requests;
 
   if (loading) return <p className="text-white">Loading...</p>;
 
@@ -251,10 +140,8 @@ const TableRequests: React.FC<TableRequestsProps> = ({ selectedStatus }) => {
             <tr
               key={row.id}
               className={`bg-white dark:bg-gray-800 border-b dark:border-gray-700 ${
-                row.process === "Finished"
+                row.process === "finished"
                   ? "dark:bg-green-900"
-                  : row.process === "Pending"
-                  ? "dark:bg-yellow-900"
                   : "dark:bg-gray-800"
               }`}
             >
@@ -271,9 +158,27 @@ const TableRequests: React.FC<TableRequestsProps> = ({ selectedStatus }) => {
               <td className="px-3 py-2">{row.summa}</td>
               <td className="px-3 py-2">{row.status}</td>
               <td className="px-3 py-2">{row.staff}</td>
-              <td className="px-3 py-2 flex justify-between">
+              <td className="px-3 py-2 flex justify-between items-center">
                 {row.process}
-                <Forward className="text-green-500 animate-pulse ml-2 cursor-pointer" />
+                {updatingRowId === row.id ? (
+                  <Settings className="w-5 h-5 text-blue-500 animate-spin ml-2" />
+                ) : isEditingRow[row.id] ? (
+                  <div className="flex gap-1 ml-2">
+                    <X
+                      className="text-red-500 cursor-pointer"
+                      onClick={() => handleCancel(row.id)}
+                    />
+                    <Check
+                      className="text-green-500 cursor-pointer"
+                      onClick={() => handleCheck(row)}
+                    />
+                  </div>
+                ) : (
+                  <Forward
+                    className="text-green-500 animate-pulse ml-2 cursor-pointer"
+                    onClick={() => handleEdit(row.id)}
+                  />
+                )}
               </td>
             </tr>
           ))}

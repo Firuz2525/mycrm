@@ -87,6 +87,7 @@ const FormClient: React.FC<FormClientProps> = ({
       summa: Number(summa),
       status,
       staff: getStaffName(), // could be hardcoded or dynamic from auth
+      process: "pending",
     };
 
     try {
