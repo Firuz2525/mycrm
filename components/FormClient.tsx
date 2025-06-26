@@ -2,9 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { db } from "../lib/firebase";
+import { auth, db } from "../lib/firebase";
 import { collection, addDoc } from "firebase/firestore";
 import { Settings } from "lucide-react";
+import { toast } from "sonner";
 
 type Product = {
   name: string;
@@ -28,22 +29,31 @@ const FormClient: React.FC<FormClientProps> = ({
   const [product, setProduct] = useState("");
   const [summa, setSumma] = useState<number | string>("");
   const [status, setStatus] = useState("");
-  const [staffName, setStaffName] = useState("Izzat");
   const [loading, setLoading] = useState(false);
 
+  // useEffect(() => {
+  //   if (selectedProducts.length > 0) {
+  //     const names = selectedProducts.map((p) => p.name).join(" + ");
+  //     const total = selectedProducts.reduce((acc, cur) => acc + cur.price, 0);
+  //     setProduct(names);
+  //     setSumma(total);
+  //   }
+  // }, [selectedProducts]);
   useEffect(() => {
     if (selectedProducts.length > 0) {
       const names = selectedProducts.map((p) => p.name).join(" + ");
       const total = selectedProducts.reduce((acc, cur) => acc + cur.price, 0);
       setProduct(names);
       setSumma(total);
+    } else {
+      setProduct(""); // <-- clear the input value
+      setSumma(0); // <-- reset the sum
     }
-    // console.log(selectedProducts);
   }, [selectedProducts]);
 
   const getStaffName = () => {
-    return staffName; // for now
-    // Later: return auth.currentUser?.displayName || "Unknown";
+    // return staffName; // for now
+    return auth.currentUser?.displayName || "Unknown";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -92,7 +102,8 @@ const FormClient: React.FC<FormClientProps> = ({
 
     try {
       await addDoc(collection(db, "clients"), newClient);
-      alert("Client added successfully ✅");
+      // alert("Client added successfully");
+      toast.success(`Client is added successfully!`);
 
       // Clear form fields (assuming you use useState)
       setCompany("");
@@ -107,6 +118,7 @@ const FormClient: React.FC<FormClientProps> = ({
     } catch (err) {
       console.error("❌ Error adding document:", err);
       alert("Failed to add client");
+      toast.error("Failed to add client");
     } finally {
       setLoading(false); // Stop loading
     }

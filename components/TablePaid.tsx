@@ -13,6 +13,42 @@ import React, { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { Settings } from "lucide-react";
+import { getAuth } from "firebase/auth";
+
+// types.ts or at top of your file
+export interface DataItem {
+  staff: string;
+  status: string;
+  id: string;
+  lavozim: string;
+  company: string;
+  product: string;
+  date: string;
+  location: string;
+  phone: string;
+  summa: number;
+  person: string;
+  process: string;
+}
+function groupByStaff(data: DataItem[]): DataItem[] {
+  const result: DataItem[] = [];
+  const visitedStaff = new Set<string>();
+
+  while (result.length < data.length) {
+    for (let i = 0; i < data.length; i++) {
+      const staffName = data[i].staff;
+      if (!visitedStaff.has(staffName)) {
+        const group = data.filter((item) => item.staff === staffName);
+        result.push(...group);
+        visitedStaff.add(staffName);
+        break;
+      }
+    }
+  }
+
+  return result;
+}
+
 const TablePaid = () => {
   const headers = [
     "ID",
@@ -32,21 +68,32 @@ const TablePaid = () => {
   const [loading, setLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const auth = getAuth();
+  const user = auth.currentUser;
+  const userName = user?.displayName || user?.email || "User";
+
   useEffect(() => {
     const q = query(collection(db, "payments"), orderBy("date", "desc"));
 
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const data: any[] = snapshot.docs.map((doc) => {
+        const allData: any[] = snapshot.docs.map((doc) => {
           const docData = doc.data();
           return {
             ...docData,
             id: doc.id,
-            date: docData.date.toDate().toLocaleString(), // ✅ Converts Firestore Timestamp to readable string
+            date: docData.date.toDate().toLocaleString(),
           };
         });
-        setPaidData(data);
+
+        const isAdmin = userName === "Firuz" || userName === "Usto";
+        const filteredData = isAdmin
+          ? allData
+          : allData.filter((item) => item.staff === userName);
+
+        const groupedData = groupByStaff(filteredData);
+        setPaidData(groupedData);
         setLoading(false);
       },
       (error) => {
@@ -54,9 +101,34 @@ const TablePaid = () => {
         setLoading(false);
       }
     );
-
     return () => unsubscribe();
-  }, []);
+  }, [userName]);
+  console.log(paidData);
+  // useEffect(() => {
+  //   const q = query(collection(db, "payments"), orderBy("date", "desc"));
+
+  //   const unsubscribe = onSnapshot(
+  //     q,
+  //     (snapshot) => {
+  //       const data: any[] = snapshot.docs.map((doc) => {
+  //         const docData = doc.data();
+  //         return {
+  //           ...docData,
+  //           id: doc.id,
+  //           date: docData.date.toDate().toLocaleString(), // ✅ Converts Firestore Timestamp to readable string
+  //         };
+  //       });
+  //       setPaidData(data);
+  //       setLoading(false);
+  //     },
+  //     (error) => {
+  //       console.error("❌ Error listening to payments:", error);
+  //       setLoading(false);
+  //     }
+  //   );
+
+  //   return () => unsubscribe();
+  // }, []);
 
   // useEffect(() => {
   //   const fetchPayments = async () => {
@@ -187,20 +259,22 @@ const TablePaid = () => {
       </table>
 
       <div className="mt-2">
-        <button
-          onClick={handleExportToExcel}
-          disabled={isDeleting}
-          className="px-4 py-2 bg-cyan-800 hover:bg-cyan-900 text-white rounded shadow transition duration-200 flex items-center gap-2"
-        >
-          {isDeleting ? (
-            <>
-              <Settings className="animate-spin w-5 h-5" />
-              Deleting...
-            </>
-          ) : (
-            "Export to Excel"
-          )}
-        </button>
+        {user?.displayName === "Firuz" && (
+          <button
+            onClick={handleExportToExcel}
+            disabled={isDeleting}
+            className="px-4 py-2 bg-cyan-800 hover:bg-cyan-900 text-white rounded shadow transition duration-200 flex items-center gap-2"
+          >
+            {isDeleting ? (
+              <>
+                <Settings className="animate-spin w-5 h-5" />
+                Deleting...
+              </>
+            ) : (
+              "Export to Excel"
+            )}
+          </button>
+        )}
       </div>
     </div>
   );

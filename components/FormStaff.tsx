@@ -1,69 +1,89 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { v4 as uuidv4 } from "uuid";
-import { db } from "../lib/firebase";
+import { toast } from "sonner";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  deleteUser,
+} from "firebase/auth";
 import {
   collection,
   addDoc,
-  getDocs,
   deleteDoc,
   doc,
   onSnapshot,
-  query,
-  orderBy,
+  serverTimestamp,
 } from "firebase/firestore";
-
-type Staff = {
-  id: string;
-  name: string;
-};
+import { db } from "../lib/firebase";
 
 const FormStaff = () => {
-  const [staffName, setStaffName] = useState("");
-  const [staffList, setStaffList] = useState<{ id: string; name: string }[]>(
-    []
-  );
-  const [error, setError] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [staffList, setStaffList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const [showDeleteId, setShowDeleteId] = useState<string | null>(null);
 
-  // Fetch staff from Firestore (realtime)
-  useEffect(() => {
-    const fetchStaff = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, "staff"));
-        const staffData: Staff[] = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          name: doc.data().name,
-        }));
-        setStaffList(staffData);
-      } catch (error) {
-        console.error("Error fetching staff:", error);
-      }
-    };
+  const auth = getAuth();
+  const currentUser = auth.currentUser;
 
-    fetchStaff();
+  // 🔒 Only Firuz can register staff
+  const isFiruz = currentUser?.displayName?.toLowerCase().includes("firuz");
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "staff"), (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setStaffList(data);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const handleAddStaff = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!staffName.trim()) {
-      setError(true);
-      alert("Please enter a staff name.");
+    if (!isFiruz) {
+      toast.error("❌ You do not have permission to add staff.");
+      return;
+    }
+    if (!email || !password || !displayName) {
+      toast.error("❌ Fill in all fields");
       return;
     }
 
-    const newStaff = {
-      name: staffName.trim(),
-    };
-
+    setLoading(true);
     try {
-      await addDoc(collection(db, "staff"), newStaff);
-      setStaffName("");
-      setError(false);
-    } catch (error) {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const newUser = userCredential.user;
+
+      await updateProfile(newUser, { displayName });
+
+      // Save staff info in Firestore
+      await addDoc(collection(db, "staff"), {
+        uid: newUser.uid,
+        email,
+        password,
+        displayName,
+        createdAt: serverTimestamp(),
+      });
+
+      toast.success(`✅ ${displayName} registered successfully!`);
+      setEmail("");
+      setPassword("");
+      setDisplayName("");
+    } catch (error: any) {
       console.error("Error adding staff:", error);
-      alert("Failed to add staff.");
+      toast.error("❌ Failed to register staff: " + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -76,46 +96,54 @@ const FormStaff = () => {
   const handleDelete = async (id: string) => {
     try {
       await deleteDoc(doc(db, "staff", id));
-      setShowDeleteId(null);
+      toast.success("🗑️ Staff deleted from Firestore");
     } catch (error) {
       console.error("Error deleting staff:", error);
-      alert("Failed to delete staff.");
+      toast.error("❌ Failed to delete staff");
     }
   };
 
-  const inputClass =
-    `px-4 py-2 rounded border text-sm w-full bg-white dark:bg-gray-900 ` +
-    `text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 ` +
-    `${error ? "border-red-500" : "border-gray-300 dark:border-gray-700"}`;
-
   return (
     <form
-      onSubmit={handleAddStaff}
+      onSubmit={handleRegister}
       className="w-full lg:w-1/3 space-y-4 p-6 mb-3 bg-white dark:bg-gray-800 rounded-xl shadow"
     >
-      <h1 className="text-xl font-bold text-white">New Staff</h1>
+      <h1 className="text-xl font-bold text-white">Register Staff</h1>
 
       <input
         type="text"
-        placeholder="New Staff Name"
-        value={staffName}
-        onChange={(e) => {
-          setStaffName(e.target.value);
-          if (error) setError(false);
-        }}
-        className={inputClass}
+        placeholder="Name"
+        value={displayName}
+        onChange={(e) => setDisplayName(e.target.value)}
+        className="px-4 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+      />
+      <input
+        type="email"
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        className="px-4 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+      />
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        className="px-4 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
       />
 
       <button
         type="submit"
-        className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded 
-        focus:outline-none focus:ring-2 focus:ring-green-400 dark:bg-green-700 
-        dark:hover:bg-green-800"
+        disabled={loading}
+        className={`w-full px-4 py-2 ${
+          loading
+            ? "bg-gray-400 cursor-not-allowed"
+            : "bg-green-600 hover:bg-green-700"
+        } text-white rounded focus:outline-none focus:ring-2 focus:ring-green-400 dark:bg-green-700 dark:hover:bg-green-800`}
       >
-        Add Staff
+        {loading ? "Registering..." : "Register Staff"}
       </button>
 
-      {/* Staff List */}
       <ul className="pt-4 space-y-2 text-m text-white list-decimal list-inside">
         {staffList.map((staff) => (
           <li
@@ -123,7 +151,7 @@ const FormStaff = () => {
             onContextMenu={(e) => handleRightClick(e, staff.id)}
             className="relative"
           >
-            {staff.name}
+            {staff.displayName} - {staff.email} - {staff.password}
             {showDeleteId === staff.id && (
               <span
                 onClick={() => handleDelete(staff.id)}

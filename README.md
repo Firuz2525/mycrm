@@ -1,5 +1,8 @@
 For performance, use pagination or lazy loading if your tables grow big.
 
+admin@gmail.com
+admin1234
+
 git add .
 git commit -m ""
 git push -u origin main

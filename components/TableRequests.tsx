@@ -1,6 +1,7 @@
 "use client";
 
 import { db } from "@/lib/firebase";
+import { getAuth } from "firebase/auth";
 import {
   addDoc,
   collection,
@@ -43,6 +44,8 @@ const TableRequests: React.FC<TableRequestsProps> = ({ selectedStatus }) => {
     {}
   );
   const [updatingRowId, setUpdatingRowId] = useState<string | null>(null);
+  const user = getAuth().currentUser;
+  const userName = user?.displayName || "";
 
   useEffect(() => {
     const q = query(collection(db, "clients"), orderBy("date", "desc"));
@@ -57,7 +60,12 @@ const TableRequests: React.FC<TableRequestsProps> = ({ selectedStatus }) => {
         } as Request;
       });
 
-      setRequests(data);
+      const isAdmin = userName === "Firuz" || userName === "Usto";
+      const filteredByUser = isAdmin
+        ? data
+        : data.filter((item) => item.staff === userName);
+
+      setRequests(filteredByUser);
       setLoading(false);
     });
 
@@ -114,7 +122,7 @@ const TableRequests: React.FC<TableRequestsProps> = ({ selectedStatus }) => {
     ? requests.filter((r) => r.status === selectedStatus)
     : requests;
 
-  if (loading) return <p className="text-white">Loading...</p>;
+  if (loading) return <Settings className="animate-spin w-5 h-5" />;
 
   return (
     <div className="relative overflow-x-auto shadow-md sm:rounded-lg">

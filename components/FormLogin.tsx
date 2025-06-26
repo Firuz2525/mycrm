@@ -1,39 +1,90 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
+
+// Import Firebase Authentication functions
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 
 const FormLogin = () => {
+  const [email, setEmail] = useState(""); // Changed 'name' to 'email'
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // Initialize Firebase Auth instance
+  const auth = getAuth();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      // Use Firebase's signInWithEmailAndPassword function
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+
+      toast.success(`✅ Welcome, ${user.email}!`);
+      setEmail("");
+      setPassword("");
+    } catch (error: any) {
+      // Handle different Firebase Auth errors
+      let errorMessage = "❌ Login failed. Please try again.";
+      if (
+        error.code === "auth/user-not-found" ||
+        error.code === "auth/wrong-password"
+      ) {
+        errorMessage = "❌ Invalid email or password.";
+      } else if (error.code === "auth/invalid-email") {
+        errorMessage = "❌ The email address is not valid.";
+      } else {
+        console.error("Firebase Auth Error:", error.message);
+      }
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false); // Ensure loading is turned off regardless of success or failure
+    }
+  };
+
   return (
     <form
-      // onSubmit={(e) => {
-      //   e.preventDefault();
-      //   // handle left form submit
-      // }}
+      onSubmit={handleSubmit}
       className="w-full lg:w-1/3 space-y-4 p-6 mb-3 bg-white dark:bg-gray-800 rounded-xl shadow"
     >
       <h1 className="text-xl font-bold text-white">Login</h1>
 
-      {/* Person */}
+      {/* Email Input */}
       <input
-        type="text"
-        placeholder="Name"
+        type="email" // Changed type to email for better UX
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
         className="px-4 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
       />
-      {/* Password */}
+
+      {/* Password Input */}
       <input
-        type="text"
+        type="password"
         placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
         className="px-4 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
       />
 
       {/* Submit Button */}
       <button
         type="submit"
-        className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded 
-                 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-blue-500 
-                 dark:hover:bg-blue-600"
+        disabled={loading}
+        className={`w-full px-4 py-2 ${
+          loading
+            ? "bg-gray-400 cursor-not-allowed"
+            : "bg-blue-600 hover:bg-blue-700"
+        } text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-blue-500 dark:hover:bg-blue-600`}
       >
-        Sign in
+        {loading ? "Signing in..." : "Sign in"}
       </button>
     </form>
   );
