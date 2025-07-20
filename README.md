@@ -1,11 +1,17 @@
 For performance, use pagination or lazy loading if your tables grow big.
 
-admin@gmail.com
-admin1234
+for icons
+https://lucide.dev/icons/x?search=tick
 
 git add .
 git commit -m ""
 git push -u origin main
+
+my github
+https://github.com/Firuz2525
+
+my firebase
+https://console.firebase.google.com/?fb_gclid=CjwKCAjwvO7CBhAqEiwA9q2YJeEpsWGZ8NJ2tx8OiIgVPOrwugaHayZNIoL1s9hX4FWC5NSscZo3rBoCfqQQAvD_BwE
 
 ## Getting Started
 

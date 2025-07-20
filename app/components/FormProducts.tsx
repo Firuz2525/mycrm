@@ -10,6 +10,7 @@ type Product = {
 type Device = {
   product1: Product;
   product2: Product;
+  product3: Product;
 };
 
 type Props = {
@@ -19,28 +20,34 @@ type Props = {
 const FormProducts = ({ setSelectedProducts }: Props) => {
   const [devices] = useState<Device[]>([
     {
-      product1: { name: "15: 1.5mln", price: 1500000 },
-      product2: { name: "Led: 150,000", price: 150000 },
-    },
-    {
-      product1: { name: "20: 2.1mln", price: 2100000 },
+      product1: { name: "15: 1.8mln", price: 1800000 },
       product2: { name: "Led: 200,000", price: 200000 },
+      product3: { name: "Mangal: 250,000", price: 250000 },
     },
     {
-      product1: { name: "25: 2.6mln", price: 2600000 },
-      product2: { name: "Led: 250,000", price: 250000 },
+      product1: { name: "20: 2.6mln", price: 2600000 },
+      product2: { name: "Led: 230,000", price: 230000 },
+      product3: { name: "Mangal: 280,000", price: 280000 },
     },
     {
-      product1: { name: "30: 3.1mln", price: 3100000 },
-      product2: { name: "Led: 300,000", price: 300000 },
+      product1: { name: "25: 3.2mln", price: 3200000 },
+      product2: { name: "Led: 270,000", price: 270000 },
+      product3: { name: "Mangal: 320,000", price: 320000 },
     },
     {
-      product1: { name: "35: 3.6mln", price: 3600000 },
-      product2: { name: "Led: 350,000", price: 350000 },
+      product1: { name: "30: 3.9mln", price: 3900000 },
+      product2: { name: "Led: 320,000", price: 320000 },
+      product3: { name: "Mangal: 370,000", price: 370000 },
     },
     {
-      product1: { name: "40: 4.1mln", price: 4100000 },
-      product2: { name: "Led: 400,000", price: 400000 },
+      product1: { name: "35: 4.6mln", price: 4600000 },
+      product2: { name: "Led: 380,000", price: 380000 },
+      product3: { name: "Mangal: 420,000", price: 420000 },
+    },
+    {
+      product1: { name: "40: 5.5mln", price: 5500000 },
+      product2: { name: "Led: 450,000", price: 450000 },
+      product3: { name: "Mangal: 450,000", price: 450000 },
     },
   ]);
 
@@ -82,11 +89,13 @@ const FormProducts = ({ setSelectedProducts }: Props) => {
             <button
               type="button"
               onClick={() =>
-                handleClick({ name: "mangal", price: device.product2.price })
+                // handleClick({ name: "mangal", price: device.product2.price })
+                handleClick(device.product3)
               }
               className={buttonClass}
             >
-              <i className="text-gray-600 cursor-pointer">+</i> mangal
+              <i className="text-gray-600 cursor-pointer">+</i>{" "}
+              {device.product3.name}
             </button>
           </li>
         ))}
